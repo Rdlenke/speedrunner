@@ -35,7 +35,9 @@ def evaluate(ind):
     """
     print('Evaluating...')
 
-    if ind.species == 'dqn':
+    print(f'Individual being evaluated: {ind}')
+
+    if(len(ind) == 2):
         model, env = create_dqn_model('MsPacmanNoFrameskip-v4', ind[0], ind[1])
     else:
         model, env = create_a2c_model('MsPacmanNoFrameskip-v4', ind[0], ind[1], ind[2])

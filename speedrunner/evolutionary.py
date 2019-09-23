@@ -2,7 +2,13 @@ from deap import base
 from deap import tools
 from deap import creator
 
+import dask.bag as db
+
 import numpy as np
+
+def dask_map(func, iterable):
+    bag = db.from_sequence(iterable).map(func)
+    return bag.compute()
 
 class Evolutionary():
     toolbox = None
@@ -14,6 +20,7 @@ class Evolutionary():
     def __init__(self, targets, maximizing, config):
         self.toolbox = base.Toolbox()
         self.toolbox.register('random', np.random.uniform, 1e-6, 1)
+        self.toolbox.register('map', dask_map)
 
         self.maximizing = maximizing
         self.config = config
@@ -107,12 +114,16 @@ class Evolutionary():
         pop_two = self.pops[keys[1]]
 
         if(pop_one != []):
-            for ind in pop_one:
-                ind.fitness.values = self.toolbox.evaluate(ind)
+            fitnesses = self.toolbox.map(self.toolbox.evaluate, pop_one)
+
+            for ind, fitness in zip(pop_one, fitnesses):
+                ind.fitness.values = fitness
 
         if(pop_two != []):
-            for ind in pop_two:
-                ind.fitness.values = self.toolbox.evaluate(ind)
+            fitnesses = self.toolbox.map(self.toolbox.evaluate, pop_two)
+
+            for ind, fitness in zip(pop_two, fitnesses):
+                ind.fitness.values = fitness
 
         pop = [*pop_one, *pop_two]
         pop = tools.selBest(pop, k=self.config['pop_size'])
@@ -123,11 +134,13 @@ class Evolutionary():
         self.pops[keys[1]] = pop_two
 
     def mutate(self):
-        pop = [*self.pops.values()]
+        print(f'Pop: {list(self.pops.values())}')
+        pop = list(self.pops.values())[0]
 
         print(f'Pop before mutation {self.pops}')
 
         for ind in pop:
+            print(f'Ind: {ind}')
             ind = self.toolbox.mutate(ind)[0]
 
         print(f'Pop before mutation {self.pops}')
