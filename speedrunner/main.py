@@ -1,4 +1,5 @@
 from evolutionary import Evolutionary
+from checkinpoint import Checkinpoint
 from reinforcement import *
 
 from functools import partialmethod
@@ -15,7 +16,9 @@ config = {
 def main():
     targets = {'dqn': 2, 'a2c': 3}
 
-    evolution = Evolutionary(targets, True, config)
+    checkinpoint = Checkinpoint('.', config)
+
+    evolution = Evolutionary(targets, True, config, checkinpoint=checkinpoint)
 
     evolution.create_pop('dqn')
     evolution.create_pop('a2c')
@@ -38,9 +41,13 @@ def evaluate(ind):
     print(f'Individual being evaluated: {ind}')
 
     if(len(ind) == 2):
+        print('Create DQN model')
         model, env = create_dqn_model('MsPacmanNoFrameskip-v4', ind[0], ind[1])
     else:
+        print('Create A2C model')
         model, env = create_a2c_model('MsPacmanNoFrameskip-v4', ind[0], ind[1], ind[2])
+
+    print(f'Created model')
 
     env.reset()
 

@@ -10,6 +10,8 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
+from checkinpoint import Checkinpoint
+
 
 def dask_map(func, iterable):
     bag = db.from_sequence(iterable).map(func)
@@ -21,8 +23,9 @@ class Evolutionary():
     config = {}
     targets = {}
     pops = {}
+    checkinpoint = None
 
-    def __init__(self, targets, maximizing, config):
+    def __init__(self, targets, maximizing, config, checkinpoint):
         self.toolbox = base.Toolbox()
         self.toolbox.register('random', np.random.uniform, 1e-6, 1)
         self.toolbox.register('map', dask_map)
@@ -30,6 +33,8 @@ class Evolutionary():
         self.maximizing = maximizing
         self.config = config
         self.targets = targets
+
+        self.checkinpoint = checkinpoint
 
         if maximizing:
             creator.create('FitnessMax', base.Fitness, weights=(1.0,))
@@ -140,6 +145,11 @@ class Evolutionary():
 
         self.pops[keys[0]] = pop_one
         self.pops[keys[1]] = pop_two
+
+        if(self.checkinpoint is not None):
+
+            self.checkinpoint.check_model(self.pops[keys[0]][0])
+            self.checkinpoint.check_model(self.pops[keys[1]][0])
 
     def mutate(self):
         pop = list(self.pops.values())[0]
