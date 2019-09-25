@@ -3,6 +3,9 @@ from stable_baselines.bench import Monitor
 from stable_baselines.common.cmd_util import make_atari_env
 from stable_baselines import DQN, A2C
 
+import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
 
 def create_dqn_model(env_id, lr=1e-4, df=0.99):
   dqn_hyperparameters = {

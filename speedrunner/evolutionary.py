@@ -6,6 +6,11 @@ import dask.bag as db
 
 import numpy as np
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+
 def dask_map(func, iterable):
     bag = db.from_sequence(iterable).map(func)
     return bag.compute()
@@ -97,6 +102,9 @@ class Evolutionary():
         pop_generator = getattr(self.toolbox, 'pop_' + name)
         self.pops[name] = pop_generator(int(self.config['pop_size'] / 2))
 
+        logging.debug(f'Population for {name}: {self.pops[name]} created.')
+
+
     def __create_pop__(self, name):
         ind_generator = getattr(self.toolbox, 'generate_' + name)
         self.toolbox.register('pop_' + name, tools.initRepeat, list, ind_generator)
@@ -134,7 +142,6 @@ class Evolutionary():
         self.pops[keys[1]] = pop_two
 
     def mutate(self):
-        print(f'Pop: {list(self.pops.values())}')
         pop = list(self.pops.values())[0]
 
         print(f'Pop before mutation {self.pops}')
@@ -143,19 +150,18 @@ class Evolutionary():
             print(f'Ind: {ind}')
             ind = self.toolbox.mutate(ind)[0]
 
-        print(f'Pop before mutation {self.pops}')
+        print(f'Pop after mutation {self.pops}')
 
     def __single_pop_crossover__(self, name):
-        childs = []
 
         pop = self.pops[name]
 
         for parent_1, parent_2 in zip(pop[::2], pop[1::2]):
             child = self.toolbox.mate(parent_1, parent_2)[0]
 
-            childs.append(child)
+            logging.debug(f'Created {name} child. Child: {child}')
 
-        self.pops[name].append(childs)
+            self.pops[name].append(child)
 
     def crossover(self):
         keys = list(self.pops.keys())
