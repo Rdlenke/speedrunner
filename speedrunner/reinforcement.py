@@ -39,6 +39,6 @@ def create_a2c_model(env_id, lr=1e-4, gc=0.5 ,df=0.99):
   a2c_env = make_atari_env(env_id, num_env=1, seed=0)
   #a2c_env = VecFrameStack(a2c_env, n_stack=4)
   a2c_model = A2C(env=a2c_env, learning_rate=lr, max_grad_norm=gc, gamma=df,
-                  **a2c_hyperparameters)
+                  **a2c_hyperparameters, verbose=1)
 
   return a2c_model, a2c_env

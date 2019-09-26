@@ -25,12 +25,7 @@ def main():
 
     evolution.register_evaluation_function(evaluate)
 
-    evolution.select()
-
-    for gen in range(config['n_generations']):
-        evolution.crossover()
-        evolution.mutate()
-        evolution.select()
+    evolution.run()
 
 def evaluate(ind):
     """

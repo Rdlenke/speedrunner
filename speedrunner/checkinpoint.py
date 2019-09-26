@@ -7,15 +7,22 @@ class Checkinpoint():
     save_path = '.'
     config = None
 
+    fitness_increment_data = {}
+
     def __init__(self, save_path, config):
         self.save_path = save_path
         self.config = config
+        self.fitness_increment_data['gens'] = []
+        self.fitness_increment_data['fitnesses'] = []
 
-    def check_model(self, ind):
+    def check_model(self, ind, gen):
         if(self.best_ind == None):
             self.best_ind = ind
         elif(ind.fitness.values[0] > self.best_ind.fitness.values[0]):
             print(f'Best fitness is {ind.species} {ind.fitness.values[0]}. Saving...')
+            self.fitness_increment_data['fitnesses'].append(ind.fitness.values[0])
+            self.fitness_increment_data['gens'].append(gen)
+
             self.best_ind = ind
 
             self.save_model()

@@ -24,6 +24,7 @@ class Evolutionary():
     targets = {}
     pops = {}
     checkinpoint = None
+    current_gen = 0
 
     def __init__(self, targets, maximizing, config, checkinpoint):
         self.toolbox = base.Toolbox()
@@ -147,9 +148,8 @@ class Evolutionary():
         self.pops[keys[1]] = pop_two
 
         if(self.checkinpoint is not None):
-
-            self.checkinpoint.check_model(self.pops[keys[0]][0])
-            self.checkinpoint.check_model(self.pops[keys[1]][0])
+            self.checkinpoint.check_model(self.pops[keys[0]][0], self.current_gen)
+            self.checkinpoint.check_model(self.pops[keys[1]][0], self.current_gen)
 
     def mutate(self):
         pop = list(self.pops.values())[0]
@@ -178,4 +178,13 @@ class Evolutionary():
 
         for key in keys:
             self.__single_pop_crossover__(key)
+
+    def run(self):
+        self.select()
+
+        for gen in range(self.config['n_generations']):
+            self.current_gen = gen
+            self.crossover()
+            self.mutate()
+            self.select()
 
