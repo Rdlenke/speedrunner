@@ -118,7 +118,7 @@ class Evolutionary():
     def register_evaluation_function(self, func):
         self.toolbox.register('evaluate', func)
 
-    def select(self):
+    def __select__(self):
         keys = list(self.targets.keys())
 
         print(f'Keys: {keys}')
@@ -141,6 +141,10 @@ class Evolutionary():
 
         pop = [*pop_one, *pop_two]
         pop = tools.selBest(pop, k=self.config['pop_size'])
+
+        if(len(pop) != self.config['pop_size']):
+            raise Exception(f'Population size {len(pop)} different than config {self.config["pop_size"]}.')
+
         pop_one = [x for x in pop if len(x) == self.targets[keys[0]]]
         pop_two = [x for x in pop if len(x) == self.targets[keys[1]]]
 
@@ -151,7 +155,7 @@ class Evolutionary():
             self.checkinpoint.check_model(self.pops[keys[0]][0], self.current_gen)
             self.checkinpoint.check_model(self.pops[keys[1]][0], self.current_gen)
 
-    def mutate(self):
+    def __mutate__(self):
         pop = list(self.pops.values())[0]
 
         print(f'Pop before mutation {self.pops}')
@@ -173,18 +177,39 @@ class Evolutionary():
 
             self.pops[name].append(child)
 
-    def crossover(self):
+    def __crossover__(self):
         keys = list(self.pops.keys())
 
         for key in keys:
             self.__single_pop_crossover__(key)
 
+    def __check_if_population_is_null__(self):
+        keys = self.pops.keys()
+        if self.pops[keys[0]] == []:
+            return str(keys[0])
+        elif self.pops[keys[1]] == []:
+            return str(keys[1])
+        else:
+            return ''
+
+    def __check_reintroduction__(self):
+        if self.current_gen <= self.config['reintroduction_threshold']:
+            result = self.__check_if_population_is_null__()
+
+            if result != '':
+                self.__reintroduce__(result)
+
+    def __reintroduce__(self, name):
+        self.create_pop(name)
+
+
     def run(self):
-        self.select()
+        self.__select__()
 
         for gen in range(self.config['n_generations']):
             self.current_gen = gen
-            self.crossover()
-            self.mutate()
-            self.select()
+            self.__check_reintroduction__()
+            self.__crossover__()
+            self.__mutate__()
+            self.__select__()
 

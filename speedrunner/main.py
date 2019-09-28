@@ -10,7 +10,8 @@ config = {
     'n_generations': 100,
     'pop_size': 4,
     'n_steps': int(1000),
-    'n_episodes': 5
+    'n_episodes': 5,
+    'reintroduction_threshold': 4
 }
 
 def main():
