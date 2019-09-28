@@ -3,7 +3,7 @@ from deap import tools
 from deap import creator
 
 import dask.bag as db
-
+import dask
 import numpy as np
 
 import logging
@@ -99,6 +99,7 @@ class Evolutionary():
 
             ind_strategy_creator = getattr(creator, 'Strategy' + name)
             ind.strategy = ind_strategy_creator(self.toolbox.random() for _ in range(number_of_params))
+            del ind.fitness.values
 
             return ind
 
@@ -121,26 +122,36 @@ class Evolutionary():
     def __select__(self):
         keys = list(self.targets.keys())
 
-        print(f'Keys: {keys}')
-        print(f'Pops: {self.pops}')
-
-        pop_one = self.pops[keys[0]]
-        pop_two = self.pops[keys[1]]
+        pop_one = [x for x in self.pops[keys[0]] if not x.fitness.values]
+        pop_two = [x for x in self.pops[keys[1]] if not x.fitness.values]
 
         if(pop_one != []):
-            fitnesses = self.toolbox.map(self.toolbox.evaluate, pop_one)
+            fitnesses = []
+
+            for ind in pop_one:
+                fitnesses.append(dask.delayed(self.toolbox.evaluate)(ind))
+
+            fitnesses = dask.compute(fitnesses)[0]
 
             for ind, fitness in zip(pop_one, fitnesses):
                 ind.fitness.values = fitness
 
+
         if(pop_two != []):
-            fitnesses = self.toolbox.map(self.toolbox.evaluate, pop_two)
+            fitnesses = []
+
+            for ind in pop_two:
+                fitnesses.append(dask.delayed(self.toolbox.evaluate)(ind))
+
+            fitnesses = dask.compute(fitnesses)[0]
 
             for ind, fitness in zip(pop_two, fitnesses):
                 ind.fitness.values = fitness
 
-        pop = [*pop_one, *pop_two]
+        pop = [*self.pops[keys[0]], *self.pops[keys[1]]]
         pop = tools.selBest(pop, k=self.config['pop_size'])
+
+        logging.debug(f'Pop size: {len(pop)}')
 
         if(len(pop) != self.config['pop_size']):
             raise Exception(f'Population size {len(pop)} different than config {self.config["pop_size"]}.')
@@ -152,8 +163,11 @@ class Evolutionary():
         self.pops[keys[1]] = pop_two
 
         if(self.checkinpoint is not None):
-            self.checkinpoint.check_model(self.pops[keys[0]][0], self.current_gen)
-            self.checkinpoint.check_model(self.pops[keys[1]][0], self.current_gen)
+            if self.pops[keys[0]] != []:
+                self.checkinpoint.check_model(self.pops[keys[0]][0], self.current_gen)
+
+            if self.pops[keys[1]] != []:
+                self.checkinpoint.check_model(self.pops[keys[1]][0], self.current_gen)
 
     def __mutate__(self):
         pop = list(self.pops.values())[0]
@@ -163,6 +177,7 @@ class Evolutionary():
         for ind in pop:
             print(f'Ind: {ind}')
             ind = self.toolbox.mutate(ind)[0]
+            del ind.fitness.values
 
         print(f'Pop after mutation {self.pops}')
 
@@ -184,7 +199,7 @@ class Evolutionary():
             self.__single_pop_crossover__(key)
 
     def __check_if_population_is_null__(self):
-        keys = self.pops.keys()
+        keys = list(self.pops.keys())
         if self.pops[keys[0]] == []:
             return str(keys[0])
         elif self.pops[keys[1]] == []:

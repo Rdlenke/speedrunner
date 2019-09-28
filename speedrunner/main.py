@@ -38,10 +38,12 @@ def evaluate(ind):
 
     if(len(ind) == 2):
         print('Create DQN model')
-        model, env = create_dqn_model('MsPacmanNoFrameskip-v4', ind[0], ind[1])
+        model = create_dqn_model('MsPacmanNoFrameskip-v4', ind[0], ind[1])
     else:
         print('Create A2C model')
-        model, env = create_a2c_model('MsPacmanNoFrameskip-v4', ind[0], ind[1], ind[2])
+        model = create_a2c_model('MsPacmanNoFrameskip-v4', ind[0], ind[1], ind[2])
+
+    env = get_env('MsPacmanNoFrameskip-v4')
 
     print(f'Created model')
 

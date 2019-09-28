@@ -29,9 +29,9 @@ class Checkinpoint():
 
     def save_model(self):
         if(self.best_ind.species == 'dqn'):
-            model, _ = create_dqn_model('MsPacmanNoFrameskip-v4', self.best_ind[0], self.best_ind[1])
+            model = create_dqn_model('MsPacmanNoFrameskip-v4', self.best_ind[0], self.best_ind[1])
         else:
-            model, _ = create_a2c_model('MsPacmanNoFrameskip-v4', self.best_ind[0], self.best_ind[1],
+            model = create_a2c_model('MsPacmanNoFrameskip-v4', self.best_ind[0], self.best_ind[1],
                                      self.best_ind[2])
         model.save(self.save_path)
 
