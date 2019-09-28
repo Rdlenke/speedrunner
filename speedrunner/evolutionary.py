@@ -8,6 +8,7 @@ import numpy as np
 
 import logging
 
+logging.getLogger('speedrunner')
 logging.basicConfig(level=logging.DEBUG)
 
 from checkinpoint import Checkinpoint
@@ -222,6 +223,7 @@ class Evolutionary():
         self.__select__()
 
         for gen in range(self.config['n_generations']):
+            logging.info(f'Generation {gen}.')
             self.current_gen = gen
             self.__check_reintroduction__()
             self.__crossover__()

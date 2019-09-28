@@ -1,5 +1,8 @@
 from reinforcement import *
 
+import logging
+
+logging.getLogger('speedrunner')
 
 class Checkinpoint():
     best_ind = None
@@ -19,7 +22,7 @@ class Checkinpoint():
         if(self.best_ind == None):
             self.best_ind = ind
         elif(ind.fitness.values[0] > self.best_ind.fitness.values[0]):
-            print(f'Best fitness is {ind.species} {ind.fitness.values[0]}. Saving...')
+            logging.info(f'Best fitness is {ind.species} {ind.fitness.values[0]}. Saving...')
             self.fitness_increment_data['fitnesses'].append(ind.fitness.values[0])
             self.fitness_increment_data['gens'].append(gen)
 
