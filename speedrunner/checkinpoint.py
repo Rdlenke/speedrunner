@@ -1,6 +1,7 @@
 from reinforcement import *
 
 import logging
+import matplotlib.pyplot as plt
 
 logging.getLogger('speedrunner')
 
@@ -37,5 +38,11 @@ class Checkinpoint():
             model = create_a2c_model('MsPacmanNoFrameskip-v4', self.best_ind[0], self.best_ind[1],
                                      self.best_ind[2])
         model.save(self.save_path)
+
+    def plot(self):
+        plt.plot(self.fitness_increment_data['gens'], self.fitness_increment_data['fitnesses'])
+        plt.xlabel('Generations')
+        plt.ylabel('Fitness')
+        plt.savefig('plot.png')
 
 

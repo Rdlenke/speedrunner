@@ -87,7 +87,7 @@ class Evolutionary():
         self.toolbox.register('select', tools.selBest)
 
         self.toolbox.register('mate', cxIntermediary)
-        self.toolbox.register('mutate', tools.mutESLogNormal, c=1.0, indpb=0.33)
+        self.toolbox.register('mutate', tools.mutESLogNormal, c=1.0, indpb=0.5)
 
         # self.toolbox.register('mate', checkStrategy(0.001))
         # self.toolbox.register('mutate', checkStrategy(0.001))

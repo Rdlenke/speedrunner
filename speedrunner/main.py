@@ -7,10 +7,10 @@ from functools import partialmethod
 import numpy as np
 
 config = {
-    'n_generations': 100,
-    'pop_size': 4,
-    'n_steps': int(1000),
-    'n_episodes': 5,
+    'n_generations': 20,
+    'pop_size': 20,
+    'n_steps': int(10000),
+    'n_episodes': 3,
     'reintroduction_threshold': 4
 }
 
@@ -27,6 +27,7 @@ def main():
     evolution.register_evaluation_function(evaluate)
 
     evolution.run()
+    checkinpoint.plot()
 
 def evaluate(ind):
     """
