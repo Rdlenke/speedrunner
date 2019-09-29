@@ -152,6 +152,9 @@ class Evolutionary():
         pop = [*self.pops[keys[0]], *self.pops[keys[1]]]
         pop = tools.selBest(pop, k=self.config['pop_size'])
 
+        if(self.checkinpoint is not None):
+           self.checkinpoint.check_model(pop, self.current_gen)
+
         logging.debug(f'Pop size: {len(pop)}')
 
         if(len(pop) != self.config['pop_size']):
@@ -163,12 +166,6 @@ class Evolutionary():
         self.pops[keys[0]] = pop_one
         self.pops[keys[1]] = pop_two
 
-        if(self.checkinpoint is not None):
-            if self.pops[keys[0]] != []:
-                self.checkinpoint.check_model(self.pops[keys[0]][0], self.current_gen)
-
-            if self.pops[keys[1]] != []:
-                self.checkinpoint.check_model(self.pops[keys[1]][0], self.current_gen)
 
     def __mutate__(self):
         pop = list(self.pops.values())[0]
