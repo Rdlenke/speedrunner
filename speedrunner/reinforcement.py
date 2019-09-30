@@ -3,8 +3,9 @@ from stable_baselines.bench import Monitor
 from stable_baselines.common.cmd_util import make_atari_env
 from stable_baselines import DQN, A2C
 
-import tensorflow as tf
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+import logging
+
+logging.getLogger('tensorflow').disabled = True
 
 import threading
 

@@ -9,7 +9,6 @@ import numpy as np
 import logging
 
 logging.getLogger('speedrunner')
-logging.basicConfig(level=logging.DEBUG)
 
 from checkinpoint import Checkinpoint
 
@@ -157,9 +156,6 @@ class Evolutionary():
 
         logging.debug(f'Pop size: {len(pop)}')
 
-        if(len(pop) != self.config['pop_size']):
-            raise Exception(f'Population size {len(pop)} different than config {self.config["pop_size"]}.')
-
         pop_one = [x for x in pop if len(x) == self.targets[keys[0]]]
         pop_two = [x for x in pop if len(x) == self.targets[keys[1]]]
 
@@ -170,14 +166,10 @@ class Evolutionary():
     def __mutate__(self):
         pop = list(self.pops.values())[0]
 
-        print(f'Pop before mutation {self.pops}')
-
         for ind in pop:
-            print(f'Ind: {ind}')
             ind = self.toolbox.mutate(ind)[0]
             del ind.fitness.values
 
-        print(f'Pop after mutation {self.pops}')
 
     def __single_pop_crossover__(self, name):
 
@@ -185,8 +177,6 @@ class Evolutionary():
 
         for parent_1, parent_2 in zip(pop[::2], pop[1::2]):
             child = self.toolbox.mate(parent_1, parent_2)[0]
-
-            logging.debug(f'Created {name} child. Child: {child}')
 
             self.pops[name].append(child)
 
