@@ -7,7 +7,7 @@ import numpy as np
 config = {
     'n_generations': 10,
     'pop_size': 4,
-    'n_steps': int(10000),
+    'n_steps': int(5000),
     'n_episodes': 3,
     'reintroduction_threshold': 4
 }

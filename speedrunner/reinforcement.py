@@ -1,7 +1,4 @@
-from stable_baselines.common.vec_env import VecFrameStack,DummyVecEnv, VecVideoRecorder
-from stable_baselines.bench import Monitor
-from stable_baselines.common.cmd_util import make_atari_env
-from stable_baselines import DQN, A2C
+import warnings
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=FutureWarning)
@@ -11,11 +8,13 @@ with warnings.catch_warnings():
     from stable_baselines import DQN, A2C
 
 import logging
-
 logging.getLogger('tensorflow').disabled = True
 
-import threading
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['KMP_WARNINGS'] = '0'
 
+import threading
 _ALE_LOCK_ = threading.Lock()
 
 def get_env(env_id):
