@@ -4,6 +4,10 @@ from reinforcement import *
 
 import numpy as np
 
+import ray
+
+ray.init('192.168.15.6:6379')
+
 config = {
     'n_generations': 10,
     'pop_size': 4,
@@ -27,6 +31,7 @@ def main():
     evolution.run()
     checkinpoint.plot()
 
+@ray.remote
 def evaluate(ind):
     """
     Evaluation method
@@ -59,8 +64,6 @@ def evaluate(ind):
         episode_rewards.append(reward_sum)
 
     return (np.mean(episode_rewards),)
-
-
 
 if __name__ == '__main__':
     main()

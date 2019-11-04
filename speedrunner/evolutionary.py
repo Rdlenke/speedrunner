@@ -2,9 +2,9 @@ from deap import base
 from deap import tools
 from deap import creator
 
-import dask.bag as db
 import dask
 import numpy as np
+import ray
 
 import logging
 
@@ -12,10 +12,6 @@ logging.getLogger('speedrunner')
 
 from checkinpoint import Checkinpoint
 
-
-def dask_map(func, iterable):
-    bag = db.from_sequence(iterable).map(func)
-    return bag.compute()
 
 class Evolutionary():
     toolbox = None
@@ -29,7 +25,6 @@ class Evolutionary():
     def __init__(self, targets, maximizing, config, checkinpoint):
         self.toolbox = base.Toolbox()
         self.toolbox.register('random', np.random.uniform, 1e-6, 1)
-        self.toolbox.register('map', dask_map)
 
         self.maximizing = maximizing
         self.config = config
@@ -129,9 +124,9 @@ class Evolutionary():
             fitnesses = []
 
             for ind in pop_one:
-                fitnesses.append(dask.delayed(self.toolbox.evaluate)(ind))
+                fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
 
-            fitnesses = dask.compute(fitnesses)[0]
+            fitnesses = ray.get(fitnesses)
 
             for ind, fitness in zip(pop_one, fitnesses):
                 ind.fitness.values = fitness
@@ -141,9 +136,9 @@ class Evolutionary():
             fitnesses = []
 
             for ind in pop_two:
-                fitnesses.append(dask.delayed(self.toolbox.evaluate)(ind))
+                fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
 
-            fitnesses = dask.compute(fitnesses)[0]
+            fitnesses = ray.get(fitnesses)
 
             for ind, fitness in zip(pop_two, fitnesses):
                 ind.fitness.values = fitness
