@@ -10,7 +10,7 @@ import logging
 
 logging.getLogger('speedrunner')
 
-from checkinpoint import Checkinpoint
+from .checkinpoint import Checkinpoint
 
 
 class Evolutionary():

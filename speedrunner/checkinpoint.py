@@ -1,4 +1,4 @@
-from reinforcement import *
+from .reinforcement import *
 
 import logging
 import matplotlib.pyplot as plt
