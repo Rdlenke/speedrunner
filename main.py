@@ -6,11 +6,11 @@ import numpy as np
 
 import ray
 
-ray.init(redis_address="172.16.1.86:6379")
+ray.init(redis_address="desktopg02:6379")
 
 config = {
     'n_generations': 10,
-    'pop_size': 10,
+    'pop_size': 100,
     'n_steps': int(5000),
     'n_episodes': 3,
     'reintroduction_threshold': 4
@@ -29,7 +29,7 @@ def main():
     evolution.register_evaluation_function(evaluate)
 
     evolution.run()
-    checkinpoint.plot_best('.')
+    checkinpoint.plot_best('graph.png')
 
 @ray.remote
 def evaluate(ind):

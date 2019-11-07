@@ -1,11 +1,17 @@
 import warnings
 
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=FutureWarning)
     from stable_baselines.common.vec_env import VecFrameStack,DummyVecEnv, VecVideoRecorder
     from stable_baselines.bench import Monitor
     from stable_baselines.common.cmd_util import make_atari_env
     from stable_baselines import DQN, A2C
+
+    import tensorflow as tf
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = tf.Session(config=config)
 
 import logging
 logging.getLogger('tensorflow').disabled = True
