@@ -1,24 +1,21 @@
-import warnings
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['KMP_WARNINGS'] = '0'
 
+import warnings
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=FutureWarning)
+    import tensorflow as tf
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = tf.Session(config=config)
+    
     from stable_baselines.common.vec_env import VecFrameStack,DummyVecEnv, VecVideoRecorder
     from stable_baselines.bench import Monitor
     from stable_baselines.common.cmd_util import make_atari_env
     from stable_baselines import DQN, A2C
-
-    import tensorflow as tf
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    session = tf.Session(config=config)
-
-import logging
-logging.getLogger('tensorflow').disabled = True
-
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['KMP_WARNINGS'] = '0'
 
 import threading
 _ALE_LOCK_ = threading.Lock()

@@ -11,7 +11,7 @@ import logging
 logging.getLogger('speedrunner')
 
 from .checkinpoint import Checkinpoint
-
+from tqdm import tqdm
 
 class Evolutionary():
     toolbox = None
@@ -127,7 +127,7 @@ class Evolutionary():
                 fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
 
             fitnesses = ray.get(fitnesses)
-
+           
             for ind, fitness in zip(pop_one, fitnesses):
                 ind.fitness.values = fitness
 
@@ -204,7 +204,7 @@ class Evolutionary():
     def run(self):
         self.__select__()
 
-        for gen in range(self.config['n_generations']):
+        for gen in tqdm(range(self.config['n_generations'])):
             logging.info(f'Generation {gen}.')
             self.current_gen = gen
             self.__check_reintroduction__()

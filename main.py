@@ -10,7 +10,7 @@ ray.init(redis_address="desktopg02:6379")
 
 config = {
     'n_generations': 10,
-    'pop_size': 100,
+    'pop_size': 12,
     'n_steps': int(5000),
     'n_episodes': 3,
     'reintroduction_threshold': 4
@@ -36,15 +36,12 @@ def evaluate(ind):
     """
     Evaluation method
     """
-    print('Evaluating...')
-
     if(len(ind) == 2):
         model = create_dqn_model('MsPacmanNoFrameskip-v4', ind[0], ind[1])
     else:
         model = create_a2c_model('MsPacmanNoFrameskip-v4', ind[0], ind[1], ind[2])
 
     env = get_env('MsPacmanNoFrameskip-v4')
-
 
     env.reset()
 
@@ -62,6 +59,9 @@ def evaluate(ind):
             reward_sum += reward
 
         episode_rewards.append(reward_sum)
+
+    del model
+    del env
 
     return (np.mean(episode_rewards),)
 
