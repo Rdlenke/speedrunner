@@ -12,6 +12,7 @@ logging.getLogger('speedrunner')
 
 from .checkinpoint import Checkinpoint
 from tqdm import tqdm
+import gc
 
 class Evolutionary():
     toolbox = None
@@ -127,10 +128,11 @@ class Evolutionary():
                 fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
 
             fitnesses = ray.get(fitnesses)
-           
+
             for ind, fitness in zip(pop_one, fitnesses):
                 ind.fitness.values = fitness
 
+            del fitnesses
 
         if(pop_two != []):
             fitnesses = []
@@ -138,10 +140,16 @@ class Evolutionary():
             for ind in pop_two:
                 fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
 
+    
             fitnesses = ray.get(fitnesses)
-
+    
             for ind, fitness in zip(pop_two, fitnesses):
                 ind.fitness.values = fitness
+    
+            del fitnesses
+    
+
+        gc.collect()
 
         pop = [*self.pops[keys[0]], *self.pops[keys[1]]]
         pop = tools.selBest(pop, k=self.config['pop_size'])
@@ -149,13 +157,16 @@ class Evolutionary():
         if(self.checkinpoint is not None):
            self.checkinpoint.check_model(pop, self.current_gen)
 
-        logging.debug(f'Pop size: {len(pop)}')
-
         pop_one = [x for x in pop if len(x) == self.targets[keys[0]]]
         pop_two = [x for x in pop if len(x) == self.targets[keys[1]]]
 
         self.pops[keys[0]] = pop_one
         self.pops[keys[1]] = pop_two
+
+        del pop_one
+        del pop_two
+
+        gc.collect()
 
 
     def __mutate__(self):

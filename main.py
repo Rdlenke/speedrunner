@@ -10,8 +10,8 @@ ray.init(redis_address="desktopg02:6379")
 
 config = {
     'n_generations': 10,
-    'pop_size': 12,
-    'n_steps': int(5000),
+    'pop_size': 20,
+    'n_steps': int(1000),
     'n_episodes': 3,
     'reintroduction_threshold': 4
 }
@@ -31,7 +31,7 @@ def main():
     evolution.run()
     checkinpoint.plot_best('graph.png')
 
-@ray.remote
+@ray.remote(num_cpus=1, num_gpus=0.1, memory=1500 * 1024 * 1024)
 def evaluate(ind):
     """
     Evaluation method
