@@ -5,10 +5,7 @@ import warnings
 
 from datetime import datetime
 
-log_dir = '/tmp/tcc/'
-os.makedirs(log_dir, exist_ok=True)
-
-@ray.remote(num_cpus=1, num_gpus=0.1)
+@ray.remote(num_cpus=1, num_gpus=0.1, memory=1000 * 1024 * 1024)
 class Reinforcement():
     def __init__(self, config):
         self.config = config
@@ -24,14 +21,12 @@ class Reinforcement():
 
             self.tf = tf
             
-            from stable_baselines import DQN, A2C, logger
+            from stable_baselines import DQN, A2C
             from stable_baselines.common.cmd_util import make_atari_env
 
             self.make_atari_env = make_atari_env
             self.DQN = DQN
             self.A2C = A2C
-
-            logger.configure(log_dir, format_strs=['csv'])
 
     def get_env(self, env_id):
         atari_env = self.make_atari_env(env_id, num_env=1, seed=datetime.now().microsecond)

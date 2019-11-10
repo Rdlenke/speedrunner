@@ -10,7 +10,7 @@ import gc
 ray.init(redis_address="desktopg02:6379")
 
 config = {
-    'n_generations': 15,
+    'n_generations': 50,
     'pop_size': 200,
     'n_steps': int(2000),
     'n_episodes': 3,
