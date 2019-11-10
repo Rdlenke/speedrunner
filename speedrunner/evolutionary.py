@@ -22,6 +22,7 @@ class Evolutionary():
     pops = {}
     checkinpoint = None
     current_gen = 0
+    evaluator = None
 
     def __init__(self, targets, maximizing, config, checkinpoint):
         self.toolbox = base.Toolbox()
@@ -113,7 +114,7 @@ class Evolutionary():
         self.toolbox.register('pop_' + name, tools.initRepeat, list, ind_generator)
 
     def register_evaluation_function(self, func):
-        self.toolbox.register('evaluate', func)
+        self.toolbox.register('actor', func.remote)
 
     def __select__(self):
         keys = list(self.targets.keys())
@@ -121,31 +122,35 @@ class Evolutionary():
         pop_one = [x for x in self.pops[keys[0]] if not x.fitness.values]
         pop_two = [x for x in self.pops[keys[1]] if not x.fitness.values]
 
+
         if(pop_one != []):
             fitnesses = []
 
             for ind in pop_one:
-                fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
+                evaluator = self.toolbox.actor(self.config)
+                fitnesses.append(evaluator.evaluate.remote(list(ind)))
 
             fitnesses = ray.get(fitnesses)
 
             for ind, fitness in zip(pop_one, fitnesses):
                 ind.fitness.values = fitness
 
+            del evaluator
             del fitnesses
 
         if(pop_two != []):
             fitnesses = []
 
             for ind in pop_two:
-                fitnesses.append(self.toolbox.evaluate.remote(list(ind)))
+                evaluator = self.toolbox.actor(self.config)
+                fitnesses.append(evaluator.evaluate.remote(list(ind)))
 
-    
             fitnesses = ray.get(fitnesses)
     
             for ind, fitness in zip(pop_two, fitnesses):
                 ind.fitness.values = fitness
     
+            del evaluator
             del fitnesses
     
 
