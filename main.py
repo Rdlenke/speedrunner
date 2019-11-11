@@ -10,8 +10,8 @@ import gc
 ray.init(redis_address="desktopg02:6379")
 
 config = {
-    'n_generations': 50,
-    'pop_size': 200,
+    'n_generations': 4,
+    'pop_size': 10,
     'n_steps': int(2000),
     'n_episodes': 3,
     'reintroduction_threshold': 4
@@ -31,6 +31,7 @@ def main():
 
     evolution.run()
     checkinpoint.plot_best('graph.png')
+    checkinpoint.plot_best_param_evolution()
 
 if __name__ == '__main__':
     main()
