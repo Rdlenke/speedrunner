@@ -3,12 +3,15 @@ from .reinforcement import *
 import logging
 import matplotlib.pyplot as plt
 
+import numpy as np
+import os
+
 logging.getLogger('speedrunner')
 
 class Checkinpoint():
     best_ind = None
     best_model = None
-    save_path = '.'
+    log_path = None 
     config = None
 
     fitness_increment_data = {}
@@ -16,8 +19,10 @@ class Checkinpoint():
     dqn_params_data = {}
     a2c_params_data = {}
 
-    def __init__(self, save_path, config):
-        self.save_path = save_path
+    def __init__(self, log_path, config):
+        os.makedirs(log_path, exist_ok=True)
+        self.log_path = log_path
+
         self.config = config
         self.fitness_increment_data['gens'] = []
         self.fitness_increment_data['fitnesses'] = []
@@ -49,57 +54,57 @@ class Checkinpoint():
 
     def plot_best_param_evolution(self):
         if len(self.best_ind) == 2:
+            self.dqn_params_data['gens'] = [x + 1 for  x in self.dqn_params_data['gens']]
             labels = [f'Geração {x}' for x in self.dqn_params_data['gens']]
 
             plt.title('Evolução do Parâmetro learning rate')
-            plt.plot(y=self.dqn_params_data['learning_rate'])
-            plt.xticks(np.arange(len(self.dqn_params_data['gens'])), labels)
-            plt.xlabel('Gerações')
+            plt.plot(self.dqn_params_data['learning_rate'])
+            plt.xticks(np.arange(1, len(self.dqn_params_data['gens']) + 1), labels)
             plt.ylabel('Learning Rate')
 
-            plt.savefig('lr-dqn.png')
+            plt.savefig(1, os.path.join(self.log_path, 'lr-dqn.png'))
 
             plt.figure()
 
             plt.title('Evolução do parâmetro discount factor')
-            plt.xticks(np.arange(len(self.dqn_params_data['gens'])), labels)
-            plt.plot(y=self.dqn_params_data['gamma'])
-            plt.xlabel('Gerações')
+            plt.plot(self.dqn_params_data['gamma'])
+            plt.xticks(np.arange(1, len(self.dqn_params_data['gens']) + 1), labels)
             plt.ylabel('Discount Rate')
 
-            plt.savefig('gamma-dqn.png')
+            plt.savefig(os.path.join(self.log_path, 'gamma-dqn.png'))
         else:
+            self.a2c_params_data['gens'] = [x + 1 for x in self.a2c_params_data['gens']]
             labels = [f'Geração {x}' for x in self.a2c_params_data['gens']]
 
+            plt.figure()
+
             plt.title('Evolução do Parâmetro learning rate')
-            plt.xticks(np.arange(len(self.a2c_params_data['gens'])), labels)
-            plt.plot(y=self.a2c_params_data['learning_rate'])
-            plt.xlabel('Gerações')
+            plt.plot(self.a2c_params_data['learning_rate'])
+            plt.xticks(np.arange(1, len(self.a2c_params_data['gens']) + 1), labels)
             plt.ylabel('Learning Rate')
 
-            plt.savefig('lr-a2c.png')
+            plt.savefig(os.path.join(self.log_path, 'lr-a2c.png'))
 
             plt.figure()
 
             plt.title('Evolução do Parâmetro Max Grad Norm')
-            plt.xticks(np.arange(len(self.a2c_params_data['gens'])), labels)
-            plt.plot(y=self.a2c_params_data['max_grad_norm'])
-            plt.xlabel('Gerações')
+            plt.plot(self.a2c_params_data['max_grad_norm'])
+            plt.xticks(np.arange(1, len(self.a2c_params_data['gens']) + 1), labels)
             plt.ylabel('Max Grad Norm')
 
-            plt.savefig('max-grad-a2c.png')
+            plt.savefig(os.path.join(self.log_path, 'max-grad-a2c.png'))
 
             plt.figure()
 
             plt.title('Evolução do parâmetro discount factor')
-            plt.xticks(np.arange(len(self.a2c_params_data['gens'])), labels)
-            plt.plot(y=self.a2c_params_data['gamma'])
-            plt.xlabel('Gerações')
+            plt.plot(self.a2c_params_data['gamma'])
+            plt.xticks(np.arange(1, len(self.a2c_params_data['gens']) + 1), labels)
             plt.ylabel('Discount Rate')
 
-            plt.savefig('gamma-a2c.png')
+            plt.savefig(os.path.join(self.log_path, 'gamma-a2c.png'))
 
-    def plot_best(self, path):
+
+    def plot_best(self):
         if len(self.best_ind) == 2:
             print('O melhor indivíduo foi o DQN com os parâmetros:')
             print(f'Learning rate: {self.best_ind[0]}')
@@ -110,9 +115,16 @@ class Checkinpoint():
             print(f'Max grad norm: {self.best_ind[1]}')
             print(f'Gamma: {self.best_ind[2]}')
 
+        self.fitness_increment_data['gens'] = [x + 1 for x in self.fitness_increment_data['gens']]
+
+        labels = [f'Geração {x}' for x in self.fitness_increment_data['gens']]
+
+        plt.figure()
+
         plt.plot(self.fitness_increment_data['gens'], self.fitness_increment_data['fitnesses'])
         plt.title('Fitness do melhor indivíduo por geração')
-        plt.xlabel('Gerações')
+        plt.xticks(np.arange(1, len(self.fitness_increment_data['gens']) + 1), labels)
         plt.ylabel('Fitness')
-        plt.savefig(path)
+
+        plt.savefig(os.path.join(self.log_path, 'best.png'))
 
