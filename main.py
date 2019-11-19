@@ -6,13 +6,14 @@ import numpy as np
 
 import ray
 import gc
+import pickle
 
 ray.init(redis_address="desktopg02:6379")
 
 config = {
-    'n_generations': 4,
-    'pop_size': 10,
-    'n_steps': int(1000),
+    'n_generations': 50,
+    'pop_size': 500,
+    'n_steps': int(5000),
     'n_episodes': 3,
     'reintroduction_threshold': 4
 }
@@ -32,6 +33,9 @@ def main():
     evolution.run()
     checkinpoint.plot_best()
     checkinpoint.plot_best_param_evolution()
+   
+    with open('checkinpoint.pickle', 'wb') as f:
+        pickle.dump(checkinpoint, f)
 
 if __name__ == '__main__':
     main()
