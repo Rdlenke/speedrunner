@@ -11,8 +11,8 @@ import pickle
 ray.init(redis_address="desktopg02:6379")
 
 config = {
-    'n_generations': 10,
-    'pop_size': 10,
+    'n_generations': 150,
+    'pop_size': 500,
     'n_steps': int(5000),
     'n_episodes': 5,
     'reintroduction_threshold': 4
@@ -47,17 +47,8 @@ fitness_increment_data['extinguished'] = []
 def callback(pops, gen, extinguished, best_ind):
     global a2c_params_data, dqn_params_data, config, fitness_increment_data
 
-    fitness_increment_data['gens'].append(gen)
-    fitness_increment_data['fitnesses'].append(best_ind.fitness.values[0])
-    fitness_increment_data['species'].append(best_ind.species)
-    fitness_increment_data['extinguished'].append(extinguished)
-
-    dqn_pop = pops['dqn']
-
-    if dqn_pop != []:
-        pop_fitnesses = [x.fitness.values[0] for x in dqn_pop]
-
-        dqn_params_data['fitnesses'].append(pop_fitnesses)
+    if gen == 0:
+        dqn_pop = pops['dqn']
 
         pop_learning_rate = [x[0] for x in dqn_pop]
 
@@ -66,33 +57,63 @@ def callback(pops, gen, extinguished, best_ind):
         dqn_params_data['pop_learning_rate'].append(pop_learning_rate)
         dqn_params_data['pop_gamma'].append(pop_gamma)
 
-        best_ind_dqn = dqn_pop[0]
-
-        dqn_params_data['learning_rate'].append(best_ind_dqn[0])
-        dqn_params_data['gamma'].append(best_ind_dqn[1])
-
-    a2c_pop = pops['a2c']
-
-    if a2c_pop != []:
-        pop_fitnesses = [x.fitness.values[0] for x in a2c_pop]
-
-        a2c_params_data['fitnesses'].append(pop_fitnesses)
+        a2c_pop = pops['a2c']
 
         pop_learning_rate = [x[0] for x in a2c_pop]
-        pop_max_grad_norm = [x[1] for x in a2c_pop]
-        pop_gamma = [x[2] for x in a2c_pop]
+        pop_gamma = [x[1] for x in a2c_pop]
+        pop_max_grad_norm = [x[2] for x in a2c_pop]
 
         a2c_params_data['pop_learning_rate'].append(pop_learning_rate)
-        a2c_params_data['pop_max_grad_norm'].append(pop_max_grad_norm)
         a2c_params_data['pop_gamma'].append(pop_gamma)
+        a2c_params_data['pop_max_grad_norm'].append(pop_max_grad_norm)
 
-        best_ind_a2c = a2c_pop[0]
+    else:
+        fitness_increment_data['gens'].append(gen)
+        fitness_increment_data['fitnesses'].append(best_ind.fitness.values[0])
+        fitness_increment_data['species'].append(best_ind.species)
+        fitness_increment_data['extinguished'].append(extinguished)
 
-        a2c_params_data['learning_rate'].append(best_ind_a2c[0])
-        a2c_params_data['max_grad_norm'].append(best_ind_a2c[1])
-        a2c_params_data['gamma'].append(best_ind_a2c[2])
+        dqn_pop = pops['dqn']
 
-    if gen == (config['n_generations'] - 1):
+        if dqn_pop != []:
+            pop_fitnesses = [x.fitness.values[0] for x in dqn_pop]
+
+            dqn_params_data['fitnesses'].append(pop_fitnesses)
+
+            pop_learning_rate = [x[0] for x in dqn_pop]
+
+            pop_gamma = [x[1] for x in dqn_pop]
+
+            dqn_params_data['pop_learning_rate'].append(pop_learning_rate)
+            dqn_params_data['pop_gamma'].append(pop_gamma)
+
+            best_ind_dqn = dqn_pop[0]
+
+            dqn_params_data['learning_rate'].append(best_ind_dqn[0])
+            dqn_params_data['gamma'].append(best_ind_dqn[1])
+
+        a2c_pop = pops['a2c']
+
+        if a2c_pop != []:
+            pop_fitnesses = [x.fitness.values[0] for x in a2c_pop]
+
+            a2c_params_data['fitnesses'].append(pop_fitnesses)
+
+            pop_learning_rate = [x[0] for x in a2c_pop]
+            pop_gamma = [x[1] for x in a2c_pop]
+            pop_max_grad_norm = [x[2] for x in a2c_pop]
+
+            a2c_params_data['pop_learning_rate'].append(pop_learning_rate)
+            a2c_params_data['pop_gamma'].append(pop_gamma)
+            a2c_params_data['pop_max_grad_norm'].append(pop_max_grad_norm)
+
+            best_ind_a2c = a2c_pop[0]
+
+            a2c_params_data['learning_rate'].append(best_ind_a2c[0])
+            a2c_params_data['gamma'].append(best_ind_a2c[1])
+            a2c_params_data['max_grad_norm'].append(best_ind_a2c[2])
+
+    if gen == (config['n_generations']):
         with open('a2c_params_data.pickle', 'wb') as f:
             pickle.dump(a2c_params_data, f)
 

@@ -20,7 +20,7 @@ class Reinforcement():
             tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
             self.tf = tf
-            
+
             from stable_baselines import DQN, A2C
             from stable_baselines.common.cmd_util import make_atari_env
 
@@ -30,7 +30,7 @@ class Reinforcement():
 
     def get_env(self, env_id):
         atari_env = self.make_atari_env(env_id, num_env=1, seed=datetime.now().microsecond)
-        return atari_env 
+        return atari_env
 
     def create_dqn_model(self, env_id, lr=1e-4, df=0.99):
         dqn_hyperparameters = {
@@ -45,20 +45,20 @@ class Reinforcement():
             'prioritized_replay_alpha': 0.6,
             'prioritized_replay': True
         }
-        
+
         dqn_env = self.get_env(env_id)
         dqn_model = self.DQN(env=dqn_env, learning_rate=lr, gamma=df, verbose=0, **dqn_hyperparameters)
 
         return dqn_model
-    
-    def create_a2c_model(self, env_id, lr=1e-4, gc=0.5 ,df=0.99):
+
+    def create_a2c_model(self, env_id, lr=1e-4, df=0.99, gc=0.5):
         a2c_hyperparameters = {
         'policy': 'CnnPolicy',
         'lr_schedule': 'constant'
         }
 
         a2c_env = self.get_env(env_id)
-        
+
         a2c_model = self.A2C(env=a2c_env, learning_rate=lr, max_grad_norm=gc, gamma=df,
                              verbose=0,
                              **a2c_hyperparameters)
@@ -72,11 +72,11 @@ class Reinforcement():
             model = self.create_a2c_model('MsPacmanNoFrameskip-v4', ind[0], ind[1], ind[2])
 
         model.learn(self.config['n_steps'])
-        
+
         episode_rewards = []
 
         env = self.get_env('MsPacmanNoFrameskip-v4')
-        
+
         for current in range(0, self.config['n_episodes']):
             reward_sum = 0
             done = False
@@ -91,16 +91,16 @@ class Reinforcement():
 
             episode_rewards.append(reward_sum)
 
-        
+
         model.graph.finalize()
         model.sess.close()
         self.tf.reset_default_graph()
 
         del model
         del env
-        
+
         gc.collect()
-        
-        mean = sum(episode_rewards) / len(episode_rewards) 
-        
-        return mean, 
+
+        mean = sum(episode_rewards) / len(episode_rewards)
+
+        return mean,

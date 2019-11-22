@@ -21,20 +21,21 @@ class Evolutionary():
     checkinpoint = None
     current_gen = 0
     evaluator = None
-    random = None
+    seed = None
+    randomizer = None
 
     extinguished = {}
 
     def __init__(self, targets, config, seed=69, callback=None):
-        self.random = np.random.RandomState(seed)
-        self.toolbox = base.Toolbox()
-        self.toolbox.register('random', self.random.uniform, 1e-6, 1)
-        self.toolbox.register('reset_seed', self.random.seed, seed)
-
+        self.seed = seed
         self.config = config
         self.targets = targets
-
         self.checkinpoint = Checkinpoint(config, callback)
+        self.randomizer = np.random.RandomState(seed)
+
+        self.toolbox = base.Toolbox()
+
+        self.toolbox.register('random', self.randomizer.uniform, 1e-6, 1)
 
         creator.create('FitnessMax', base.Fitness, weights=(1.0,))
 
@@ -73,7 +74,6 @@ class Evolutionary():
             ind.strategy = ind_strategy_creator(self.toolbox.random() for _ in range(number_of_params))
             del ind.fitness.values
 
-            self.toolbox.reset_seed()
             return ind
 
         self.toolbox.register('generate_' + name, generate)
@@ -81,7 +81,6 @@ class Evolutionary():
     def create_pop(self, name):
         pop_generator = getattr(self.toolbox, 'pop_' + name)
         self.pops[name] = pop_generator(int(self.config['pop_size'] / len(self.targets.keys())))
-
 
     def __create_pop__(self, name):
         ind_generator = getattr(self.toolbox, 'generate_' + name)
@@ -175,9 +174,10 @@ class Evolutionary():
 
 
     def run(self):
+        self.checkinpoint.check_model(self.pops, self.current_gen, self.extinguished)
         self.__select__()
 
-        for gen in tqdm(range(self.config['n_generations'])):
+        for gen in tqdm(range(1, self.config['n_generations'] + 1)):
             self.current_gen = gen
             self.__check_reintroduction__()
             self.__crossover__()
