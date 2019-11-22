@@ -2,13 +2,11 @@ from deap import base
 from deap import tools
 from deap import creator
 
-import dask
+import itertools
+
 import numpy as np
+
 import ray
-
-import logging
-
-logging.getLogger('speedrunner')
 
 from .checkinpoint import Checkinpoint
 from tqdm import tqdm
@@ -23,24 +21,22 @@ class Evolutionary():
     checkinpoint = None
     current_gen = 0
     evaluator = None
+    random = None
 
-    def __init__(self, targets, maximizing, config, checkinpoint):
+    extinguished = {}
+
+    def __init__(self, targets, config, seed=69, callback=None):
+        self.random = np.random.RandomState(seed)
         self.toolbox = base.Toolbox()
-        self.toolbox.register('random', np.random.uniform, 1e-6, 1)
+        self.toolbox.register('random', self.random.uniform, 1e-6, 1)
+        self.toolbox.register('reset_seed', self.random.seed, seed)
 
-        self.maximizing = maximizing
         self.config = config
         self.targets = targets
 
-        self.checkinpoint = checkinpoint
+        self.checkinpoint = Checkinpoint(config, callback)
 
-        if maximizing:
-            creator.create('FitnessMax', base.Fitness, weights=(1.0,))
-        else:
-            creator.create('FitnessMin', base.Fitness, weights=(-1.0,))
-
-        if targets is None:
-            raise Exception('Empty list of population names!')
+        creator.create('FitnessMax', base.Fitness, weights=(1.0,))
 
         for species in targets.keys():
             self.__create_structures__(species)
@@ -48,12 +44,8 @@ class Evolutionary():
             self.__create_pop__(species)
 
     def __create_structures__(self, name):
-        if(self.maximizing):
-            creator.create('Individual' + name, list, fitness=creator.FitnessMax,
-                           species=name, strategy=None)
-        else:
-            creator.create('Individual' + name, list, fitness=creator.FitnessMin,
-                           species=name, strategy=None)
+        creator.create('Individual' + name, list, fitness=creator.FitnessMax,
+                        species=name, strategy=None)
 
         creator.create('Strategy' + name, list)
 
@@ -67,27 +59,10 @@ class Evolutionary():
 
             return ind3,
 
-        def checkStrategy(minstrategy):
-            def decorator(func):
-                def wrapper(*args, **kargs):
-                    children = func(*args, **kargs)
-
-                    for child in children:
-                        for i, s in enumerate(child.strategy):
-                            if s < minstrategy:
-                                child.strategy[i] = minstrategy
-                    return children
-                return wrapper
-            return decorator
-
         self.toolbox.register('select', tools.selBest)
 
         self.toolbox.register('mate', cxIntermediary)
         self.toolbox.register('mutate', tools.mutESLogNormal, c=1.0, indpb=0.5)
-
-        # self.toolbox.register('mate', checkStrategy(0.001))
-        # self.toolbox.register('mutate', checkStrategy(0.001))
-
 
     def __create_individual__(self, name, number_of_params):
         def generate():
@@ -98,80 +73,59 @@ class Evolutionary():
             ind.strategy = ind_strategy_creator(self.toolbox.random() for _ in range(number_of_params))
             del ind.fitness.values
 
+            self.toolbox.reset_seed()
             return ind
 
         self.toolbox.register('generate_' + name, generate)
 
     def create_pop(self, name):
         pop_generator = getattr(self.toolbox, 'pop_' + name)
-        self.pops[name] = pop_generator(int(self.config['pop_size'] / 2))
-
-        logging.debug(f'Population for {name}: {self.pops[name]} created.')
+        self.pops[name] = pop_generator(int(self.config['pop_size'] / len(self.targets.keys())))
 
 
     def __create_pop__(self, name):
         ind_generator = getattr(self.toolbox, 'generate_' + name)
         self.toolbox.register('pop_' + name, tools.initRepeat, list, ind_generator)
 
-    def register_evaluation_function(self, func):
+    def register_evaluation_class(self, func):
         self.toolbox.register('actor', func.remote)
 
-    def __select__(self):
+
+    def __evaluate_individuals__(self):
         keys = list(self.targets.keys())
 
-        pop_one = [x for x in self.pops[keys[0]] if not x.fitness.values]
-        pop_two = [x for x in self.pops[keys[1]] if not x.fitness.values]
+        for key in keys:
+            pop = [x for x in self.pops[key] if not x.fitness.values]
+
+            if(pop != []):
+                fitnesses = []
+
+                for ind in pop:
+                    evaluator = self.toolbox.actor(self.config)
+                    fitnesses.append(evaluator.evaluate.remote(list(ind)))
+
+                fitnesses = ray.get(fitnesses)
+
+                for ind, fitness in zip(pop, fitnesses):
+                    ind.fitness.values = fitness
+
+                del evaluator
+                del fitnesses
 
 
-        if(pop_one != []):
-            fitnesses = []
+    def __select__(self):
+        self.__evaluate_individuals__()
 
-            for ind in pop_one:
-                evaluator = self.toolbox.actor(self.config)
-                fitnesses.append(evaluator.evaluate.remote(list(ind)))
+        keys = list(self.pops.keys())
 
-            fitnesses = ray.get(fitnesses)
+        pop = [self.pops[key] for key in keys]
 
-            for ind, fitness in zip(pop_one, fitnesses):
-                ind.fitness.values = fitness
+        pop = list(itertools.chain(*pop))
 
-            del evaluator
-            del fitnesses
-
-        if(pop_two != []):
-            fitnesses = []
-
-            for ind in pop_two:
-                evaluator = self.toolbox.actor(self.config)
-                fitnesses.append(evaluator.evaluate.remote(list(ind)))
-
-            fitnesses = ray.get(fitnesses)
-    
-            for ind, fitness in zip(pop_two, fitnesses):
-                ind.fitness.values = fitness
-    
-            del evaluator
-            del fitnesses
-    
-
-        gc.collect()
-
-        pop = [*self.pops[keys[0]], *self.pops[keys[1]]]
         pop = tools.selBest(pop, k=self.config['pop_size'])
 
-        if(self.checkinpoint is not None):
-           self.checkinpoint.check_model(pop, self.current_gen)
-
-        pop_one = [x for x in pop if len(x) == self.targets[keys[0]]]
-        pop_two = [x for x in pop if len(x) == self.targets[keys[1]]]
-
-        self.pops[keys[0]] = pop_one
-        self.pops[keys[1]] = pop_two
-
-        del pop_one
-        del pop_two
-
-        gc.collect()
+        for key in keys:
+            self.pops[key] = [x for x in pop if x.species == key]
 
 
     def __mutate__(self):
@@ -199,32 +153,38 @@ class Evolutionary():
 
     def __check_if_population_is_null__(self):
         keys = list(self.pops.keys())
-        if self.pops[keys[0]] == []:
-            return str(keys[0])
-        elif self.pops[keys[1]] == []:
-            return str(keys[1])
-        else:
-            return ''
+
+        extinguished_species = []
+
+        for species in keys:
+            if self.pops[species] == []:
+                extinguished_species.append(species)
+
+        return extinguished_species
 
     def __check_reintroduction__(self):
         if self.current_gen <= self.config['reintroduction_threshold']:
             result = self.__check_if_population_is_null__()
 
-            if result != '':
+            if result != []:
+                self.extinguished.update({ self.current_gen: result })
                 self.__reintroduce__(result)
 
-    def __reintroduce__(self, name):
-        self.create_pop(name)
+    def __reintroduce__(self, species):
+        list(map(self.create_pop, species))
 
 
     def run(self):
         self.__select__()
 
         for gen in tqdm(range(self.config['n_generations'])):
-            logging.info(f'Generation {gen}.')
             self.current_gen = gen
             self.__check_reintroduction__()
             self.__crossover__()
             self.__mutate__()
             self.__select__()
+            self.checkinpoint.check_model(self.pops, self.current_gen, self.extinguished)
+            self.extinguished = {}
+
+        self.checkinpoint.show_best_model()
 
